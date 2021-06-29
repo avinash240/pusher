@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/avinash240/pusher/internal/endpoints"
 	"github.com/avinash240/pusher/internal/plugins"
 )
 
@@ -15,4 +16,6 @@ func main() {
 	for _, p := range plugins {
 		fmt.Printf("%+v", p)
 	}
+	//
+	endpoints.GetChromeCasts()
 }
