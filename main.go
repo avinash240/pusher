@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/avinash240/pusher/internal/endpoints"
 	"github.com/avinash240/pusher/internal/plugins"
+	"github.com/avinash240/pusher/internal/streaming"
 )
 
 func main() {
@@ -16,6 +16,20 @@ func main() {
 	for _, p := range plugins {
 		fmt.Printf("%+v", p)
 	}
-	//
-	endpoints.GetChromeCasts()
+
+	/* Testing Local Streaming Code */
+	fmt.Println("\n\n*** Testing Local Streaming ***")
+	song, err := (&streaming.LocalAudio{}).New("file://localhost/tmp/data.txt")
+	if err != nil {
+		log.Fatalln(err)
+	}
+	c, err := song.GetStream()
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	for val := range c {
+		log.Println(val)
+	}
+	fmt.Println("\n*****")
 }
