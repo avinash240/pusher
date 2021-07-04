@@ -18,8 +18,7 @@ func main() {
 	}
 
 	/* Testing Local Streaming Code */
-	fmt.Println("\n\n*** Testing Local Streaming ***")
-	song, err := (&streaming.LocalAudio{}).New("file://localhost/tmp/data.txt")
+	song, err := (&streaming.LocalAudio{}).New("file://localhost/tmp/data1.txt")
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -27,9 +26,5 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-
-	for val := range c {
-		log.Println(val)
-	}
-	fmt.Println("\n*****")
+	fmt.Printf("\n\n%T <- %v\n", c, c)
 }

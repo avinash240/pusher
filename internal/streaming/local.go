@@ -1,6 +1,7 @@
 package streaming
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -8,16 +9,21 @@ import (
 	"strconv"
 )
 
-// LocalAudio is a data structure that stores the URI of file and Transport scheme (usually file://)
+// LocalAudio is a data structure that stores the URI of file and Transport
+// scheme (usually file://).
 type LocalAudio struct {
 	URI       url.URL
 	Transport http.Transport
 }
 
+// StreamingData is a data structure that retains data bytes for pushing to
+// endpoints.
 type StreamingData struct {
 	Bytes []byte
 }
 
+// New returns a pointer to an instance of LocalAudio with path translated
+// for local audio data.
 func (*LocalAudio) New(path string) (*LocalAudio, error) {
 	uri, err := url.Parse(path)
 	if err != nil {
@@ -28,22 +34,36 @@ func (*LocalAudio) New(path string) (*LocalAudio, error) {
 	return &LocalAudio{URI: *uri, Transport: *t}, nil
 }
 
-func (la *LocalAudio) GetStream() (sd chan []byte, e error) {
-	sd = make(chan []byte)
+// GetStream interfaces and instance of LocalAudio and returns a byte channel or
+// err. Byte channels contains streamed data.
+func (la *LocalAudio) GetStream() (streamingData chan []byte, e error) {
+	streamingData = make(chan []byte)
+	if len(la.URI.Path) <= 0 {
+		return nil, fmt.Errorf(
+			"no path provided. This needs LocalAudio.New(path) first; got '%+v'",
+			la.URI.Path)
+		// log.Fatalln("No path provided. This needs LocalAudio.New(path) first")
+	}
 	fileReader, filzeSize, err := getReader(la.URI, la.Transport)
 	if err != nil {
 		return nil, err
 	}
 
-	go pullData(fileReader, sd, make([]byte, filzeSize))
-	return sd, e
+	go pullData(fileReader, streamingData, make([]byte, filzeSize))
+	return streamingData, e
 }
 
+// getReader is a private function that takes a path and http transport type and
+// returns an io.Reader, size of file, or error.
 func getReader(u url.URL, t http.Transport) (io.Reader, int, error) {
 	c := &http.Client{}
 	c.Transport = &t
 	resp, err := c.Get(u.String())
-	if err != nil {
+	if resp.StatusCode > 399 || err != nil {
+		if resp.StatusCode > 399 {
+			err = fmt.Errorf("expected status 200 or redirection 30x. Got '%s'",
+				resp.Status)
+		}
 		return nil, 0, err
 	}
 	fileSize, err := strconv.Atoi(resp.Header.Get("Content-Length"))
@@ -53,6 +73,8 @@ func getReader(u url.URL, t http.Transport) (io.Reader, int, error) {
 	return resp.Body, fileSize, nil
 }
 
+// pullData is a private function that takes an io.Reader and channel and data
+// buffer and writes data to the channel.
 func pullData(r io.Reader, s chan []byte, buf []byte) {
 	n, err := r.Read(buf)
 	if err != nil {
