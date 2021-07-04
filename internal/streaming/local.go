@@ -42,7 +42,6 @@ func (la *LocalAudio) GetStream() (streamingData chan []byte, e error) {
 		return nil, fmt.Errorf(
 			"no path provided. This needs LocalAudio.New(path) first; got '%+v'",
 			la.URI.Path)
-		// log.Fatalln("No path provided. This needs LocalAudio.New(path) first")
 	}
 	fileReader, filzeSize, err := getReader(la.URI, la.Transport)
 	if err != nil {
