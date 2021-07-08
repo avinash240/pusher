@@ -24,7 +24,7 @@ type StreamingData struct {
 
 // New returns a pointer to an instance of LocalAudio with path translated
 // for local audio data.
-func (*LocalAudio) New(path string) (*LocalAudio, error) {
+func NewLocalStream(path string) (*LocalAudio, error) {
 	uri, err := url.Parse(path)
 	if err != nil {
 		return nil, err

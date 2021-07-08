@@ -20,7 +20,7 @@ func TestLocalStream(t *testing.T) {
 	//Test against local file. Passes if 200 OK and len(data) > 0.
 	path := strings.Join([]string{"file://localhost", gopath,
 		"/src/pusher/internal/tests/test_data/thank_you.wav"}, "")
-	file, err := (&strm.LocalAudio{}).New(path)
+	file, err := strm.NewLocalStream(path)
 	log.Printf("* Test for file path: %s", file.URI.Path)
 	if err != nil {
 		t.Errorf("New() failed with issue:\n%+v", err)
@@ -50,7 +50,7 @@ func TestLocalStream(t *testing.T) {
 	log.Println(strings.Repeat("*", strRp))
 
 	// Test against protected file. Passes if 403 Forbidden is reflected.
-	file, err = (&strm.LocalAudio{}).New("file://localhost/etc/shadow")
+	file, err = strm.NewLocalStream("file://localhost/etc/shadow")
 	log.Printf("* Test for file path: %s", file.URI.Path)
 	if err != nil {
 		t.Errorf("New() failed with issue:\n%+v", err)
