@@ -36,6 +36,7 @@ func NewLocalStream(path string) (*LocalAudio, error) {
 
 // GetStream interfaces and instance of LocalAudio and returns a byte channel or
 // err. Byte channels contains streamed data.
+// NOTES - Return streamingdata type from channel
 func (la *LocalAudio) GetStream() (streamingData chan []byte, e error) {
 	streamingData = make(chan []byte)
 	if len(la.URI.Path) <= 0 {
@@ -43,11 +44,14 @@ func (la *LocalAudio) GetStream() (streamingData chan []byte, e error) {
 			"no path provided. This needs LocalAudio.New(path) first; got '%+v'",
 			la.URI.Path)
 	}
+	// NOTES - No longer needed os.Open() with give you something with the
+	// io.Reader interface
 	fileReader, filzeSize, err := getReader(la.URI, la.Transport)
 	if err != nil {
 		return nil, err
 	}
 
+	// NOTES - move make call into pulldata
 	go pullData(fileReader, streamingData, make([]byte, filzeSize))
 	return streamingData, e
 }
@@ -75,12 +79,16 @@ func getReader(u url.URL, t http.Transport) (io.Reader, int, error) {
 // pullData is a private function that takes an io.Reader and channel and data
 // buffer and writes data to the channel.
 func pullData(r io.Reader, s chan []byte, buf []byte) {
-	n, err := r.Read(buf)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	if n > 0 {
+	// NOTES - move this to io.ReadAll
+	start := 0
+	l := make([]byte, 3000)
+	for {
+		n, err := r.Read(l[start:])
+		if err != nil {
+			log.Fatalln(err)
+		}
+		start += n
 		s <- buf
 	}
-	close(s)
+	defer close(s)
 }

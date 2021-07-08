@@ -17,6 +17,7 @@ func TestLocalStream(t *testing.T) {
 	//
 	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
 	print(">>>>>>>>", dir)
+	// NOTES - make pathing local to this location
 
 	gopath := os.Getenv("GOPATH")
 	if gopath == "" {
