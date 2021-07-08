@@ -4,6 +4,7 @@ import (
 	"go/build"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -13,21 +14,25 @@ import (
 func TestLocalStream(t *testing.T) {
 	strRp := 50
 	log.Println(strings.Repeat("*", strRp))
+	//
+	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	print(">>>>>>>>", dir)
+
 	gopath := os.Getenv("GOPATH")
 	if gopath == "" {
 		gopath = build.Default.GOPATH
 	}
 	//Test against local file. Passes if 200 OK and len(data) > 0.
-	path := strings.Join([]string{"file://localhost", gopath,
-		"/src/pusher/internal/tests/test_data/thank_you.wav"}, "")
-	file, err := strm.NewLocalStream(path)
-	log.Printf("* Test for file path: %s", file.URI.Path)
+	path := strings.Join([]string{"file://localhost", dir,
+		"/internal/tests/test_data/thank_you.wav"}, "")
+	ls, err := strm.NewLocalStream(path)
+	log.Printf("* Test for file path: %s", ls.URI.Path)
 	if err != nil {
 		t.Errorf("New() failed with issue:\n%+v", err)
 		t.FailNow()
 	}
 
-	data, err := file.GetStream()
+	data, err := ls.GetStream()
 	if err != nil {
 		t.Errorf("GetStream() failed with issue:\n%+v", err)
 		t.FailNow()
@@ -50,13 +55,13 @@ func TestLocalStream(t *testing.T) {
 	log.Println(strings.Repeat("*", strRp))
 
 	// Test against protected file. Passes if 403 Forbidden is reflected.
-	file, err = strm.NewLocalStream("file://localhost/etc/shadow")
-	log.Printf("* Test for file path: %s", file.URI.Path)
+	ls, err = strm.NewLocalStream("file://localhost/etc/shadow")
+	log.Printf("* Test for file path: %s", ls.URI.Path)
 	if err != nil {
 		t.Errorf("New() failed with issue:\n%+v", err)
 		t.FailNow()
 	}
-	_, err = file.GetStream()
+	_, err = ls.GetStream()
 	if err != nil && strings.Contains(err.Error(), "403") == false {
 		t.Errorf("GetStream() failed with issue:\n%+v", err)
 		t.FailNow()
