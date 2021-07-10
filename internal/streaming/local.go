@@ -3,17 +3,16 @@ package streaming
 import (
 	"fmt"
 	"io"
-	"log"
-	"net/http"
-	"net/url"
-	"strconv"
+	"os"
+	"path/filepath"
 )
 
-// LocalAudio is a data structure that stores the URI of file and Transport
-// scheme (usually file://).
+// LocalAudio is a data structure that stores the path of the audio source, the
+// file handle when opened, and the size of the file.
 type LocalAudio struct {
-	URI       url.URL
-	Transport http.Transport
+	Location string
+	File     os.File
+	Size     int64
 }
 
 // StreamingData is a data structure that retains data bytes for pushing to
@@ -22,73 +21,55 @@ type StreamingData struct {
 	Bytes []byte
 }
 
-// New returns a pointer to an instance of LocalAudio with path translated
+// NewLocalStream returns a pointer to an instance of LocalAudio with path translated
 // for local audio data.
 func NewLocalStream(path string) (*LocalAudio, error) {
-	uri, err := url.Parse(path)
+	fh, err := os.Open(path)
 	if err != nil {
 		return nil, err
 	}
-	t := &http.Transport{}
-	t.RegisterProtocol("file", http.NewFileTransport((http.Dir("/"))))
-	return &LocalAudio{URI: *uri, Transport: *t}, nil
-}
-
-// GetStream interfaces and instance of LocalAudio and returns a byte channel or
-// err. Byte channels contains streamed data.
-// NOTES - Return streamingdata type from channel
-func (la *LocalAudio) GetStream() (streamingData chan []byte, e error) {
-	streamingData = make(chan []byte)
-	if len(la.URI.Path) <= 0 {
-		return nil, fmt.Errorf(
-			"no path provided. This needs LocalAudio.New(path) first; got '%+v'",
-			la.URI.Path)
-	}
-	// NOTES - No longer needed os.Open() with give you something with the
-	// io.Reader interface
-	fileReader, filzeSize, err := getReader(la.URI, la.Transport)
+	fp, err := filepath.Abs(path)
 	if err != nil {
 		return nil, err
 	}
-
-	// NOTES - move make call into pulldata
-	go pullData(fileReader, streamingData, make([]byte, filzeSize))
-	return streamingData, e
-}
-
-// getReader is a private function that takes a path and http transport type and
-// returns an io.Reader, size of file, or error.
-func getReader(u url.URL, t http.Transport) (io.Reader, int, error) {
-	c := &http.Client{}
-	c.Transport = &t
-	resp, err := c.Get(u.String())
-	if resp.StatusCode > 399 || err != nil {
-		if resp.StatusCode > 399 {
-			err = fmt.Errorf("expected status 200 or redirection 30x. Got '%s'",
-				resp.Status)
-		}
-		return nil, 0, err
-	}
-	fileSize, err := strconv.Atoi(resp.Header.Get("Content-Length"))
+	fs, err := fh.Stat()
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
-	return resp.Body, fileSize, nil
+	return &LocalAudio{Location: fp, File: *fh, Size: fs.Size()}, nil
 }
 
-// pullData is a private function that takes an io.Reader and channel and data
-// buffer and writes data to the channel.
-func pullData(r io.Reader, s chan []byte, buf []byte) {
-	// NOTES - move this to io.ReadAll
-	start := 0
-	l := make([]byte, 3000)
+// GetStream interfaces and instance of LocalAudio and returns a StreamingData
+// channel. Byte channels contains streamed data from file. If no location found
+// error will return.
+func (la *LocalAudio) GetStream() (sd chan StreamingData, e error) {
+	if la.Location == "" {
+		return nil, fmt.Errorf("failed file opening, or no filepath specified;" +
+			" see NewLocalAudio()")
+	}
+	sd = make(chan StreamingData)
+	go streamDataToChannel(la.File, sd, 4096)
+	return sd, nil
+}
+
+// streamDataToChannel is takes an os.File, a StreamingData channel, and a size
+// to make starting buffer. Data is streamed into channel from file. Derived
+// from io.ReadAll() source.
+func streamDataToChannel(f os.File, sd chan StreamingData, cS int) {
+	buffer := make([]byte, 0, cS)
 	for {
-		n, err := r.Read(l[start:])
-		if err != nil {
-			log.Fatalln(err)
+		if len(buffer) == cap(buffer) {
+			buffer = append(buffer, 0)[:len(buffer)]
 		}
-		start += n
-		s <- buf
+		n, err := f.Read(buffer[len(buffer):cap(buffer)])
+		sd <- StreamingData{Bytes: buffer[len(buffer):cap(buffer)]}
+		buffer = buffer[:len(buffer)+n]
+		if err != nil {
+			if err == io.EOF {
+				err = nil
+			}
+			close(sd)
+			return
+		}
 	}
-	defer close(s)
 }
