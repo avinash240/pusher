@@ -15,8 +15,8 @@ func TestLocalStream(t *testing.T) {
 
 	// Test against local file. Passes if file opened, streamed,
 	// and len(data) > 0.
-	localStream, err := strm.NewLocalStream("./test_data/thank_you.wav")
-	log.Printf("* Test for file path: %s", localStream.Location)
+	localStream, err := strm.NewLocalStream("./test_data/")
+	log.Printf("* Test for file path: %v", localStream.FilePaths)
 	if err != nil {
 		t.Errorf("NewLocalStream() failed with issue:\n%+v", err)
 		t.FailNow()
@@ -37,6 +37,7 @@ func TestLocalStream(t *testing.T) {
 				len(v.Bytes),
 				end,
 				v.Bytes[:int(end)])
+			break
 		}
 	}
 	log.Println(strings.Repeat("*", strRp))
@@ -46,9 +47,10 @@ func TestLocalStream(t *testing.T) {
 	localStream, err = strm.NewLocalStream(path)
 	log.Printf("* Test for file path: %s", path)
 	if err == nil {
-		t.Errorf("NewLocalStream() opened restricted file: %v", localStream.Location)
+		t.Errorf("NewLocalStream() opened restricted file(s): %v", localStream.FilePaths)
 		t.FailNow()
 	}
+	log.Printf("*    got expected error: %+v", err)
 	log.Println(strings.Repeat("*", strRp))
 
 	// Test against calling GetStream() without an instance of LocalAudio

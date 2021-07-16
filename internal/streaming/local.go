@@ -3,16 +3,14 @@ package streaming
 import (
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"path/filepath"
 )
 
-// LocalAudio is a data structure that stores the path of the audio source, the
-// file handle when opened, and the size of the file.
+// LocalAudio is a data structure that stores the path of the audio source(s).
 type LocalAudio struct {
-	Location string
-	File     os.File
-	Size     int64
+	FilePaths []string
 }
 
 // StreamingData is a data structure that retains data bytes for pushing to
@@ -21,55 +19,67 @@ type StreamingData struct {
 	Bytes []byte
 }
 
-// NewLocalStream returns a pointer to an instance of LocalAudio with path translated
-// for local audio data.
+// NewLocalStream returns a pointer to an instance of LocalAudio with FilePaths
+// translated for local audio data source(s).
 func NewLocalStream(path string) (*LocalAudio, error) {
-	fh, err := os.Open(path)
+	var files []string
+	p, err := os.Open(path)
 	if err != nil {
 		return nil, err
 	}
-	fp, err := filepath.Abs(path)
+	fS, err := p.Stat()
 	if err != nil {
 		return nil, err
 	}
-	fs, err := fh.Stat()
-	if err != nil {
-		return nil, err
+	if !fS.IsDir() {
+		p, _ := filepath.Abs(path)
+		files = append(files, p)
+		return &LocalAudio{FilePaths: files}, nil
 	}
-	return &LocalAudio{Location: fp, File: *fh, Size: fs.Size()}, nil
+	filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
+		p, _ := filepath.Abs(path)
+		if !info.IsDir() {
+			files = append(files, p)
+		}
+		return nil
+	})
+	return &LocalAudio{FilePaths: files}, nil
 }
 
 // GetStream interfaces and instance of LocalAudio and returns a StreamingData
-// channel. Byte channels contains streamed data from file. If no location found
-// error will return.
+// channel. Byte channels contains streamed data from file. No paths found will
+// return an error.
 func (la *LocalAudio) GetStream() (sd chan StreamingData, e error) {
-	if la.Location == "" {
-		return nil, fmt.Errorf("failed file opening, or no filepath specified;" +
-			" see NewLocalAudio()")
+	if len(la.FilePaths) <= 0 {
+		return nil, fmt.Errorf("no files found for the path provided")
 	}
 	sd = make(chan StreamingData)
-	go streamDataToChannel(la.File, sd, 4096)
+	go streamDataToChannel(la.FilePaths, sd, 4096)
 	return sd, nil
 }
 
-// streamDataToChannel is takes an os.File, a StreamingData channel, and a size
-// to make starting buffer. Data is streamed into channel from file. Derived
-// from io.ReadAll() source.
-func streamDataToChannel(f os.File, sd chan StreamingData, cS int) {
-	buffer := make([]byte, 0, cS)
-	for {
-		if len(buffer) == cap(buffer) {
-			buffer = append(buffer, 0)[:len(buffer)]
-		}
-		n, err := f.Read(buffer[len(buffer):cap(buffer)])
-		sd <- StreamingData{Bytes: buffer[len(buffer):cap(buffer)]}
-		buffer = buffer[:len(buffer)+n]
+// streamDataToChannel takes a list of paths, a StreamingData channel, and a buf
+// size for streaming. Data is streamed into channel from file in cS sized
+// chunks. Channel closes after all files are read.
+func streamDataToChannel(f []string, sd chan StreamingData, cS int) {
+	buffer := make([]byte, cS)
+	for _, p := range f {
+		fh, err := os.Open(p)
 		if err != nil {
-			if err == io.EOF {
-				err = nil
-			}
-			close(sd)
-			return
+			log.Fatalln(err)
 		}
+		for {
+			n, err := fh.Read(buffer)
+			_ = n
+			sd <- StreamingData{Bytes: buffer[:n]}
+			if err != nil {
+				if err == io.EOF {
+					err = nil
+				}
+				break
+			}
+		}
+		fh.Close()
 	}
+	close(sd)
 }
