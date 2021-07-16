@@ -10,12 +10,12 @@ import (
 )
 
 func TestLocalStream(t *testing.T) {
-	strRp := 50
+	strRp := 100
 	log.Println(strings.Repeat("*", strRp))
 
 	// Test against local file. Passes if file opened, streamed,
 	// and len(data) > 0.
-	localStream, err := strm.NewLocalStream("./test_data/")
+	localStream, err := strm.NewLocalStream("./test_data/thank_you.wav")
 	log.Printf("* Test for file path: %v", localStream.FilePaths)
 	if err != nil {
 		t.Errorf("NewLocalStream() failed with issue:\n%+v", err)
@@ -33,17 +33,34 @@ func TestLocalStream(t *testing.T) {
 			t.FailNow()
 		} else {
 			end := math.Min(float64(len(v.Bytes)), 8)
-			log.Printf("\t  (%d,%0.0f) got data: [ %+s ... ]",
+			log.Printf("*\t  (%d,%0.0f) got data: [ %+s ... ]",
 				len(v.Bytes),
 				end,
 				v.Bytes[:int(end)])
-			break
+			break // Tests a single pass.
 		}
 	}
 	log.Println(strings.Repeat("*", strRp))
 
+	// Test against local files. Passes if more than one file is listed,
+	// and len(data) > 0.
+	path := "./test_data/"
+	localStream, err = strm.NewLocalStream(path)
+	log.Printf("* Test for directory path: %s", path)
+	if err != nil {
+		t.Errorf("NewLocalStream() failed with issue:\n%+v", err)
+		t.FailNow()
+	}
+	if len(localStream.FilePaths) < 2 {
+		t.Errorf("NewLocalStream() failed with issue: expected more than 2 files, got %d",
+			len(localStream.FilePaths))
+		t.FailNow()
+	}
+	log.Printf("*\t got files count: %d", len(localStream.FilePaths))
+	log.Println(strings.Repeat("*", strRp))
+
 	// Test against protected file. Passes if perrmission denied.
-	path := "/etc/shadow"
+	path = "/etc/shadow"
 	localStream, err = strm.NewLocalStream(path)
 	log.Printf("* Test for file path: %s", path)
 	if err == nil {
