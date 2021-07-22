@@ -70,8 +70,8 @@ func streamDataToChannel(f []string, sd chan StreamingData, cS int) {
 		}
 		for {
 			n, err := fh.Read(buffer)
-			_ = n
-			sd <- StreamingData{Bytes: buffer[:n]}
+			chunk := buffer[:n]
+			sd <- StreamingData{Bytes: chunk}
 			if err != nil {
 				if err == io.EOF {
 					err = nil

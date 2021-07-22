@@ -5,7 +5,7 @@ import (
 	"log"
 
 	"github.com/avinash240/pusher/internal/plugins"
-	"github.com/avinash240/pusher/internal/streaming"
+	strm "github.com/avinash240/pusher/internal/streaming"
 )
 
 func main() {
@@ -18,7 +18,7 @@ func main() {
 	}
 
 	/* Testing Local Streaming Code */
-	song, err := (&streaming.LocalAudio{}).New("file://localhost/tmp/data1.txt")
+	song, err := strm.NewLocalStream("internal/tests/test_data/thank_you.wav")
 	if err != nil {
 		log.Fatalln(err)
 	}
