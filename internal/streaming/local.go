@@ -31,7 +31,7 @@ func NewLocalStream(path string) (*LocalAudio, error) {
 	if err != nil {
 		return nil, err
 	}
-	if !fS.IsDir() {
+	if fS.Mode().IsRegular() { //Is regular file
 		p, _ := filepath.Abs(path)
 		files = append(files, p)
 		return &LocalAudio{FilePaths: files}, nil
@@ -70,7 +70,8 @@ func streamDataToChannel(f []string, sd chan StreamingData, cS int) {
 		}
 		for {
 			n, err := fh.Read(buffer)
-			chunk := buffer[:n]
+			chunk := make([]byte, n)
+			copy(chunk, buffer)
 			sd <- StreamingData{Bytes: chunk}
 			if err != nil {
 				if err == io.EOF {
