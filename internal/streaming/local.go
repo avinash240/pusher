@@ -6,11 +6,13 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // LocalAudio is a data structure that stores the path of the audio source(s).
 type LocalAudio struct {
-	FilePaths []string
+	FilePaths  []string
+	StrictPath string
 }
 
 // StreamingData is a data structure that retains data bytes for pushing to
@@ -31,19 +33,25 @@ func NewLocalStream(path string) (*LocalAudio, error) {
 	if err != nil {
 		return nil, err
 	}
+	absP, _ := filepath.Abs(path)
 	if fS.Mode().IsRegular() { //Is regular file
-		p, _ := filepath.Abs(path)
-		files = append(files, p)
-		return &LocalAudio{FilePaths: files}, nil
+		files = append(files, path)
+		pathSplit := strings.Split(absP, "/")
+		pathSplit = pathSplit[:len(pathSplit)-1]
+		absP = strings.Join(pathSplit, "/")
+		return &LocalAudio{FilePaths: files, StrictPath: absP}, nil
 	}
-	filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
-		p, _ := filepath.Abs(path)
+	filepath.Walk(path, func(spath string, info os.FileInfo, err error) error {
 		if !info.IsDir() {
-			files = append(files, p)
+			pathA := strings.Split(spath, "/")
+			filename := pathA[len(pathA)-1]
+			tar := strings.Join([]string{"/", filename}, "")
+			files = append(files, tar)
 		}
 		return nil
 	})
-	return &LocalAudio{FilePaths: files}, nil
+
+	return &LocalAudio{FilePaths: files, StrictPath: absP}, nil
 }
 
 // GetStream interfaces and instance of LocalAudio and returns a StreamingData

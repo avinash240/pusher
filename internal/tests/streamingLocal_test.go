@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	strm "github.com/avinash240/pusher/internal/streaming"
+	ls "github.com/avinash240/pusher/internal/streaming"
 )
 
 func TestLocalStream(t *testing.T) {
@@ -15,7 +15,7 @@ func TestLocalStream(t *testing.T) {
 
 	// Test against local file. Passes if file opened, streamed,
 	// and len(data) > 0.
-	localStream, err := strm.NewLocalStream("./test_data/thank_you.wav")
+	localStream, err := ls.NewLocalStream("./test_data/thank_you.wav")
 	log.Printf("* Test for file path: %v", localStream.FilePaths)
 	if err != nil {
 		t.Errorf("NewLocalStream() failed with issue:\n%+v", err)
@@ -45,7 +45,7 @@ func TestLocalStream(t *testing.T) {
 	// Test against local files. Passes if more than one file is listed,
 	// and len(data) > 0.
 	path := "./test_data/"
-	localStream, err = strm.NewLocalStream(path)
+	localStream, err = ls.NewLocalStream(path)
 	log.Printf("* Test for directory path: %s", path)
 	if err != nil {
 		t.Errorf("NewLocalStream() failed with issue:\n%+v", err)
@@ -61,7 +61,7 @@ func TestLocalStream(t *testing.T) {
 
 	// Test against protected file. Passes if perrmission denied.
 	path = "/etc/shadow"
-	localStream, err = strm.NewLocalStream(path)
+	localStream, err = ls.NewLocalStream(path)
 	log.Printf("* Test for file path: %s", path)
 	if err == nil {
 		t.Errorf("NewLocalStream() opened restricted file(s): %v", localStream.FilePaths)
@@ -71,7 +71,7 @@ func TestLocalStream(t *testing.T) {
 	log.Println(strings.Repeat("*", strRp))
 
 	// Test against calling GetStream() without an instance of LocalAudio
-	_, err = (&strm.LocalAudio{}).GetStream()
+	_, err = (&ls.LocalAudio{}).GetStream()
 	log.Printf("* Test for bad method call on GetStream()")
 	if err == nil {
 		t.Errorf("GetStream() expected error; got nil")

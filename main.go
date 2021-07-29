@@ -5,7 +5,8 @@ import (
 	"log"
 
 	"github.com/avinash240/pusher/internal/plugins"
-	strm "github.com/avinash240/pusher/internal/streaming"
+	srv "github.com/avinash240/pusher/internal/server"
+	ls "github.com/avinash240/pusher/internal/streaming"
 )
 
 func main() {
@@ -18,7 +19,7 @@ func main() {
 	}
 
 	/* Testing Local Streaming Code */
-	song, err := strm.NewLocalStream("internal/tests/test_data/thank_you.wav")
+	song, err := ls.NewLocalStream("internal/tests/test_data/thank_you.wav")
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -27,4 +28,8 @@ func main() {
 		log.Fatalln(err)
 	}
 	fmt.Printf("\n\n%T <- %v\n", c, c)
+
+	/* Testing Server Code*/
+	srv.NewLocalServer()
+
 }
