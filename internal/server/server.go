@@ -5,6 +5,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -21,7 +22,10 @@ func getLocalAddress() (net.IP, error) {
 	var iface net.Interface
 	for _, eth := range ifaces {
 		if strings.Contains(eth.Name, "eth0") ||
-			strings.Contains(eth.Name, "wlan0") {
+			strings.Contains(eth.Name, "wlan0") ||
+			strings.Contains(eth.Name, "Wi-Fi") ||
+			strings.Contains(eth.Name, "Ethernet") ||
+			strings.Contains(eth.Name, "Wireless") {
 			iface = eth
 			break
 		}
@@ -92,13 +96,11 @@ func load(w http.ResponseWriter, r *http.Request, address net.IP, port int) ([]s
 	}
 	streamItems = make([]streamItem, len(assets.FilePaths))
 	for i, item := range assets.FilePaths {
-		tmp := strings.Split(item, "/")[len(strings.Split(item, "/"))-1]
-		streamItems[i].filename = strings.Join([]string{assets.StrictPath, tmp}, "/")
-		path := strings.Split(item, "/")
-		filename := path[len(path)-1]
-		ct := strings.Split(filename, ".")
-		ext := ct[len(ct)-1]
-		if len(ct) < 2 || ext == "" {
+		filename := filepath.Base(item)
+		p := filepath.Join(assets.StrictPath, filename)
+		streamItems[i].filename = p
+		ext := filepath.Ext(filename)
+		if ext == "" {
 			streamItems[i].contentType = "Unknown"
 		} else {
 			streamItems[i].contentType = ext

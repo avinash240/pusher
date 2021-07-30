@@ -6,7 +6,6 @@ import (
 
 	"github.com/avinash240/pusher/internal/plugins"
 	srv "github.com/avinash240/pusher/internal/server"
-	ls "github.com/avinash240/pusher/internal/streaming"
 )
 
 func main() {
@@ -17,17 +16,6 @@ func main() {
 	for _, p := range plugins {
 		fmt.Printf("%+v", p)
 	}
-
-	/* Testing Local Streaming Code */
-	song, err := ls.NewLocalStream("internal/tests/test_data/thank_you.wav")
-	if err != nil {
-		log.Fatalln(err)
-	}
-	c, err := song.GetStream()
-	if err != nil {
-		log.Fatalln(err)
-	}
-	fmt.Printf("\n\n%T <- %v\n", c, c)
 
 	/* Testing Server Code*/
 	srv.NewLocalServer()
