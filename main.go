@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/avinash240/pusher/internal/endpoints"
 	"github.com/avinash240/pusher/internal/plugins"
+	srv "github.com/avinash240/pusher/internal/server"
 )
 
 func main() {
@@ -16,6 +16,8 @@ func main() {
 	for _, p := range plugins {
 		fmt.Printf("%+v", p)
 	}
-	//
-	endpoints.GetChromeCasts()
+
+	/* Testing Server Code*/
+	srv.NewLocalServer()
+
 }
