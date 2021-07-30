@@ -21,11 +21,12 @@ func getLocalAddress() (net.IP, error) {
 	}
 	var iface net.Interface
 	for _, eth := range ifaces {
-		if strings.Contains(eth.Name, "eth0") ||
-			strings.Contains(eth.Name, "wlan0") ||
-			strings.Contains(eth.Name, "Wi-Fi") ||
-			strings.Contains(eth.Name, "Ethernet") ||
-			strings.Contains(eth.Name, "Wireless") {
+		ethName := strings.ToLower(eth.Name)
+		if strings.Contains(ethName, "eth0") ||
+			strings.Contains(ethName, "wlan0") ||
+			strings.Contains(ethName, "wi-fi") ||
+			strings.Contains(ethName, "ethernet") ||
+			strings.Contains(ethName, "wireless") {
 			iface = eth
 			break
 		}
