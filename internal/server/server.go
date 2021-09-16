@@ -23,6 +23,7 @@ func getLocalAddress() (net.IP, error) {
 	for _, eth := range ifaces {
 		ethName := strings.ToLower(eth.Name)
 		if strings.Contains(ethName, "eth0") ||
+			strings.Contains(ethName, "en0") ||
 			strings.Contains(ethName, "wlan0") ||
 			strings.Contains(ethName, "wi-fi") ||
 			strings.Contains(ethName, "ethernet") ||
