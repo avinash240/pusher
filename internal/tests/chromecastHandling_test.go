@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -12,7 +13,6 @@ import (
 )
 
 func TestLoadChromecastMiddleware(t *testing.T) {
-	log.Println("called")
 	c := srv.NewHandler(false)
 	if c == nil {
 		t.Errorf("unable to load handler")
@@ -25,7 +25,7 @@ func TestLoadChromecastMiddleware(t *testing.T) {
 		t.Errorf(err.Error())
 		t.FailNow()
 	}
-	b, err := ioutil.ReadAll(resp.Body)
+	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		t.Errorf(err.Error())
 		t.FailNow()
@@ -37,14 +37,25 @@ func TestLoadChromecastMiddleware(t *testing.T) {
 		UUID string `json:"uuid"`
 	}
 	d := []Data{}
-	json.Unmarshal(b, &d)
-	log.Println(string(b))
-	log.Printf("%+v", d)
+	json.Unmarshal(body, &d)
+	log.Println(string(body))
 	for k, v := range d {
 		log.Println(k, v)
 	}
 	if len(d) > 0 && len(d[0].UUID) > 0 {
-		log.Println(d[0].Name)
-		log.Println(d[0].UUID)
+		resp, err := http.Get("http://localhost:8081/connect?uuid=" + d[0].UUID)
+		if err != nil {
+			t.Errorf(err.Error())
+			t.FailNow()
+		}
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			t.Errorf(err.Error())
+			t.FailNow()
+		}
+		if strings.Contains(string(body), "missing from query params") {
+			t.Errorf(string(body))
+			t.FailNow()
+		}
 	}
 }

@@ -226,7 +226,7 @@ func (h *Handler) connect(w http.ResponseWriter, r *http.Request) {
 	h.mu.Unlock()
 
 	w.Header().Add("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(chttp.ConnectResponse{DeviceUUID: deviceUUID}); err != nil {
+	if err := json.NewEncoder(w).Encode(chttp.ConnectResponse{DeviceUUID: deviceUUID, Connected: true}); err != nil {
 		log.Printf("error encoding json: %v", err)
 		httpError(w, fmt.Errorf("unable to json encode devices: %v", err))
 		return
