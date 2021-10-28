@@ -4,6 +4,7 @@ import cast "github.com/avinash240/pusher/internal/server/cast"
 
 type ConnectResponse struct {
 	DeviceUUID string `json:"device_uuid"`
+	Connected  bool   `json:"connected"`
 }
 
 type volumeResponse struct {
