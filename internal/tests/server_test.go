@@ -28,7 +28,7 @@ func TestServer(t *testing.T) {
 		t.Errorf("expected status 400 got %d", resp.StatusCode)
 		t.FailNow()
 	}
-	resp, err = http.Get("http://100.115.92.202:9002/load?target=./test_data/")
+	resp, err = http.Get("http://100.115.92.202:9002/loadStream?target=./test_data/")
 	if err != nil {
 		t.Error(err)
 		t.FailNow()

@@ -66,13 +66,13 @@ type streamItem struct {
 	transcode   bool
 }
 
-// load takes http.Response, http.Request from http handler, and the server
+// streamingServerLoad takes http.Response, http.Request from http handler, and the server
 // address and port number; returns an array of streaming items or error.
-// load is used by webserver as a http handle function. load walks the directory
-// specified to the webserver in the media_file parameter, and load assets into
-// data structure for streaming. load must be ran first or server will not serve
+// streamingServerLoad is used by webserver as a http handle function. streamingServerLoad walks the directory
+// specified to the webserver in the media_file parameter, and streamingServerLoad assets into
+// data structure for streaming. streamingServerLoad must be ran first or server will not serve
 // content.
-func load(w http.ResponseWriter, r *http.Request, address net.IP, port int) ([]streamItem, error) {
+func streamingServerLoad(w http.ResponseWriter, r *http.Request, address net.IP, port int) ([]streamItem, error) {
 	target := r.URL.Query().Get("target")
 	//transcode := r.URL.Query().Get("live_streaming")
 	//TODO: something with live_streaming transcoding with ffmeg?
@@ -242,8 +242,8 @@ func NewLocalServer() {
 	msg := fmt.Sprintf("Listening on 0.0.0.0:%d", port)
 	sendMsg(msg)
 
-	http.HandleFunc("/load", func(w http.ResponseWriter, r *http.Request) {
-		sI, err = load(w, r, address, port)
+	http.HandleFunc("/loadStream", func(w http.ResponseWriter, r *http.Request) {
+		sI, err = streamingServerLoad(w, r, address, port)
 		if err == nil {
 			loaded = true
 		}
